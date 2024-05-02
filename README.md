@@ -52,7 +52,7 @@ Scaling invariants:
 - Cheapest AWS instance with sustained 10 Gbps network bandwidth is `m5.8xlarge` at $1.54 / hour
 
 | instances | runtime (hours) |
--------------------------------
+|-----------|-----------------|
 | 1         | 225.5           |
 | 10        | 22.6            |
 | 20        | 11.3            |
@@ -63,7 +63,7 @@ Hypothetically the scaling is linear, so the cost will be ~$345.
 Additionally, we can could scale network bandwidth:
 
 | instances | network (Gbps) | runtime (hours) | instance | cost |
-------------------------------------------------------------------
+|-----------|----------------|-----------------|----------|------|
 | 1         | 20             | 116.8           | `m5.16xlarge` | $358 |
 | 1         | 25             | 94.8            | `m5n.8xlarge` | $180 |
 | 1         | 50             | 51.6            | `m5n.12xlarge` | $147 | 
