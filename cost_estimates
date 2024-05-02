@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+from dataclasses import dataclass
+
+TOTAL_CORPUS_SIZE_BYTES = 1024**5
+NUM_DOCUMENTS = TOTAL_CORPUS_SIZE_BYTES / (500 * 1024)
+
+@dataclass
+class ScalingConfig:
+    hash_instances: int
+    dedup_instances: int
+
+@dataclass
+class InstanceType:
+    dedup_cores: int
+    network_bandwidth_gbps: int
+    price_per_hour: float
+    name: str
+
+def runtime_and_cost(instance: InstanceType, scaling: ScalingConfig) -> (float, float):
+    network_bandwidth_gibps = instance.network_bandwidth_gbps * 1024**3 / 8.0
+    hashing_runtime = TOTAL_CORPUS_SIZE_BYTES / float(scaling.hash_instances * network_bandwidth_gibps) / float(60**2)
+    dedup_runtime = NUM_DOCUMENTS / float(scaling.dedup_instances * instance.dedup_cores * 275000) / float(60**2)
+    runtime_hours = hashing_runtime + dedup_runtime
+    cost = hashing_runtime * instance.price_per_hour * scaling.hash_instances \
+        + dedup_runtime * instance.price_per_hour * scaling.dedup_instances
+    return (runtime_hours, cost) 
+
+instance_types = [
+    InstanceType(
+        dedup_cores=32,
+        network_bandwidth_gbps=10,
+        price_per_hour=1.54,
+        name="m5.8xlarge"
+    ),
+    InstanceType(
+        dedup_cores=48,
+        network_bandwidth_gbps=20,
+        price_per_hour=1.85,
+        name="m6g.12xlarge"
+    ),
+    InstanceType(
+        dedup_cores=32,
+        network_bandwidth_gbps=25,
+        price_per_hour=1.90,
+        name="m5n.8xlarge"
+    ),
+    InstanceType(
+        dedup_cores=48,
+        network_bandwidth_gbps=100,
+        price_per_hour=3.96,
+        name="m5zn.12xlarge"
+    ),
+]
+
+scaling_configs = [
+    ScalingConfig(
+        hash_instances=1,
+        dedup_instances=1,
+    ),
+    ScalingConfig(
+        hash_instances=4,
+        dedup_instances=4,
+    ),
+    ScalingConfig(
+        hash_instances=16,
+        dedup_instances=16,
+    ),
+    ScalingConfig(
+        hash_instances=32,
+        dedup_instances=32,
+    ),
+    ScalingConfig(
+        hash_instances=32,
+        dedup_instances=16,
+    ),
+    ScalingConfig(
+        hash_instances=32,
+        dedup_instances=4,
+    ),
+]
+
+if __name__ == "__main__":
+    print(
+        "| hash_instances | dedup_instances | network (Gbps) | runtime (hours) | instance | cost |"
+    )
+    print(
+        "|----------------|-----------------|----------------|-----------------|----------|------|"
+    )
+    for instance_type in instance_types:
+        for scaling_config in scaling_configs:
+            runtime, cost = runtime_and_cost(instance_type, scaling_config)
+            print(
+                f"| {scaling_config.hash_instances} |"
+                f" {scaling_config.dedup_instances} |"
+                f" {instance_type.network_bandwidth_gbps} |"
+                f" {round(runtime, 2)} |"
+                f" `{instance_type.name}` |"
+                f" {round(cost, 2)} |"
+            )

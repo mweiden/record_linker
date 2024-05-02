@@ -38,7 +38,7 @@ The `dedup_hashes` stage can be parallelized by running multiple instances of th
 In experiments on an Apple M3 laptop, loading data from its SSD:
 
 - `hash_documents` can process ~1 GiB of files / sec
-- `dedup_hashes` can process hash files at ~75k rows / sec
+- `dedup_hashes` can process hash files at ~275k rows / sec
 
 The experiments showed that the binaries were IO bound rather than CPU bound, so we might be able to go higher provided higher-throughput IO.
 
@@ -46,32 +46,39 @@ The experiments showed that the binaries were IO bound rather than CPU bound, so
 
 Scaling invariants:
 - Estimated number of files: `2.2e9`
-- Formula for time of the hash generation step: `1024^5 / (num_instances * network_bandwidth_gbs * 1024^3 / 8)`
-- Formula for time of the hash deduplication step: `2.2e9 / (num_instances * cores * 75000)`
+- Formula for time of the hash generation step: `1024**5 / float(num_hash_instances * network_bandwidth_gbs * 1024**3 / 8)`
+- Formula for time of the hash deduplication step: `2.2e9 / float(num_dedup_instances * cores * 275000)`
 - Fix [10 Gbps network bandwidth](https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html#gp_network); that's 1.34 GiB/s
 - Cheapest AWS instance with sustained 10 Gbps network bandwidth is `m5.8xlarge` at $1.54 / hour
 
-| instances | runtime (hours) |
-|-----------|-----------------|
-| 1         | 225.5           |
-| 10        | 22.6            |
-| 20        | 11.3            |
-| 40        | 5.6             |
+| hash_instances | dedup_instances | network (Gbps) | runtime (hours) | instance | cost |
+|----------------|-----------------|----------------|-----------------|----------|------|
+| 1 | 1 | 10 | 233.09 | `m5.8xlarge` | 358.95 |
+| 4 | 4 | 10 | 58.27 | `m5.8xlarge` | 358.95 |
+| 16 | 16 | 10 | 14.57 | `m5.8xlarge` | 358.95 |
+| 32 | 32 | 10 | 7.28 | `m5.8xlarge` | 358.95 |
+| 32 | 16 | 10 | 7.29 | `m5.8xlarge` | 358.95 |
+| 32 | 4 | 10 | 7.3 | `m5.8xlarge` | 358.95 |
+| 1 | 1 | 20 | 116.55 | `m6g.12xlarge` | 215.63 |
+| 4 | 4 | 20 | 29.14 | `m6g.12xlarge` | 215.63 |
+| 16 | 16 | 20 | 7.28 | `m6g.12xlarge` | 215.63 |
+| 32 | 32 | 20 | 3.64 | `m6g.12xlarge` | 215.63 |
+| 32 | 16 | 20 | 3.64 | `m6g.12xlarge` | 215.63 |
+| 32 | 4 | 20 | 3.65 | `m6g.12xlarge` | 215.63 |
+| 1 | 1 | 25 | 93.28 | `m5n.8xlarge` | 177.22 |
+| 4 | 4 | 25 | 23.32 | `m5n.8xlarge` | 177.22 |
+| 16 | 16 | 25 | 5.83 | `m5n.8xlarge` | 177.22 |
+| 32 | 32 | 25 | 2.91 | `m5n.8xlarge` | 177.22 |
+| 32 | 16 | 25 | 2.92 | `m5n.8xlarge` | 177.22 |
+| 32 | 4 | 25 | 2.93 | `m5n.8xlarge` | 177.22 |
+| 1 | 1 | 100 | 23.35 | `m5zn.12xlarge` | 92.46 |
+| 4 | 4 | 100 | 5.84 | `m5zn.12xlarge` | 92.46 |
+| 16 | 16 | 100 | 1.46 | `m5zn.12xlarge` | 92.46 |
+| 32 | 32 | 100 | 0.73 | `m5zn.12xlarge` | 92.46 |
+| 32 | 16 | 100 | 0.73 | `m5zn.12xlarge` | 92.46 |
+| 32 | 4 | 100 | 0.74 | `m5zn.12xlarge` | 92.46 |
 
-Hypothetically the scaling is linear, so the cost will be ~$345.
-
-Additionally, we can could scale network bandwidth:
-
-| instances | network (Gbps) | runtime (hours) | instance | cost |
-|-----------|----------------|-----------------|----------|------|
-| 1         | 20             | 116.8           | `m5.16xlarge` | $358 |
-| 1         | 25             | 94.8            | `m5n.8xlarge` | $180 |
-| 1         | 50             | 51.6            | `m5n.12xlarge` | $147 | 
-| 1         | 100            | 29.9            | `m5dn.24xlarge` | $196 | 
-| 2         | 50             | 25.8            | `m5n.12xlarge` | $147 | 
-| 4         | 50             | 12.9            | `m5n.12xlarge` | $147 | 
-| 10        | 50             | 5.2             | `m5n.12xlarge` | $147 | 
-| 20        | 50             | 2.6             | `m5n.12xlarge` | $147 | 
+See the `cost_estimates` script for more details.
 
 ## Development
 
