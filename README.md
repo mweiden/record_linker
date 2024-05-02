@@ -9,7 +9,7 @@ Demonstration software for the following problem:
 > - do not use existing data processing frameworks, e.g. mapreduce, spark
 > - it should run in less than a day
 
-Based on some experimentation and back of the envelope scaling calculations, this solution should be able to deduplicate 1PiB of ~500KiB documents in about 45 minutes with about $93 of cloud compute.
+Based on some experimentation and back of the envelope scaling calculations, this solution should be able to deduplicate 1PiB of ~500KiB documents in about 30 minutes with about $93 of cloud compute.
 
 ## Approach
 
