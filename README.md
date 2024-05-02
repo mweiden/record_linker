@@ -48,8 +48,8 @@ Scaling invariants:
 - Estimated number of files: `2.2e9`
 - Formula for time of the hash generation step: `1024**5 / float(num_hash_instances * network_bandwidth_gbs * 1024**3 / 8)`
 - Formula for time of the hash deduplication step: `2.2e9 / float(num_dedup_instances * cores * 275000)`
-- Fix [10 Gbps network bandwidth](https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html#gp_network); that's 1.34 GiB/s
-- Cheapest AWS instance with sustained 10 Gbps network bandwidth is `m5.8xlarge` at $1.54 / hour
+
+Results from scaling the number of intstances and network bandwidth (instance type):
 
 | hash_instances | dedup_instances | network (Gbps) | runtime (hours) | instance | cost |
 |----------------|-----------------|----------------|-----------------|----------|------|
