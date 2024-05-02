@@ -40,7 +40,7 @@ In experiments on an Apple M3 laptop, loading data from its SSD:
 - `hash_documents` can process ~1 GiB of files / sec
 - `dedup_hashes` can process hash files at ~275k rows / sec
 
-The experiments showed that the binaries were IO bound rather than CPU bound, so we might be able to go higher provided higher-throughput IO.
+The experiments showed that `hash_documents` is IO bound rather than CPU bound, so we might be able to go higher provided higher-throughput IO.
 
 #### Hypothetical scenario for 1PB of documents
 
