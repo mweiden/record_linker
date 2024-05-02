@@ -59,19 +59,23 @@ scaling_configs = [
     ),
     ScalingConfig(
         hash_instances=4,
+        dedup_instances=1,
+    ),
+    ScalingConfig(
+        hash_instances=4,
         dedup_instances=4,
     ),
     ScalingConfig(
         hash_instances=16,
-        dedup_instances=16,
+        dedup_instances=1,
+    ),
+    ScalingConfig(
+        hash_instances=16,
+        dedup_instances=4,
     ),
     ScalingConfig(
         hash_instances=32,
-        dedup_instances=32,
-    ),
-    ScalingConfig(
-        hash_instances=32,
-        dedup_instances=16,
+        dedup_instances=1,
     ),
     ScalingConfig(
         hash_instances=32,
@@ -81,10 +85,8 @@ scaling_configs = [
 
 if __name__ == "__main__":
     print(
-        "| hash_instances | dedup_instances | network (Gbps) | runtime (stg1/stg2, hours) | instance | cost |"
-    )
-    print(
-        "|----------------|-----------------|----------------|-----------------|----------|------|"
+        "| hash_instances | dedup_instances | network (Gbps) | runtime (stg1/stg2, hours) | instance | cost |\n"
+        "|----------------|-----------------|----------------|----------------------------|----------|------|"
     )
     for instance_type in instance_types:
         for scaling_config in scaling_configs:
