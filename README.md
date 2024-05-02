@@ -3,7 +3,7 @@
 Demonstration software for the following problem:
 
 > Deduplicate a large corpus of documents:
-> - ~1PiB of documents, ~500KB each
+> - ~1PiB of documents, ~500KiB each
 > - documents are in cloud storage, e.g. s3, gcs
 > - there are too many to fit on a single machine
 > - do not use existing data processing frameworks, e.g. mapreduce, spark
