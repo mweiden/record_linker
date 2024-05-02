@@ -44,7 +44,6 @@ The experiments showed that `hash_documents` is IO bound rather than CPU bound, 
 
 #### Hypothetical scenario for 1PB of documents
 
-Scaling invariants:
 - Estimated number of files: `2.2e9`
 - Formula for time of the hash generation step: `1024**5 / float(num_hash_instances * network_bandwidth_gbs * 1024**3 / 8)`
 - Formula for time of the hash deduplication step: `2.2e9 / float(num_dedup_instances * cores * 275000)`
