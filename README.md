@@ -14,12 +14,12 @@ Demonstration software for the following problem:
 The solution breaks the problem down into two steps
 
 1. Generate a collision-resistant hash of the contents of each file
-2. Gather filepaths by matching hashes, and then pick just one filepath from each collection
+1. Gather filepaths by matching hashes, and then pick just one filepath from each collection
 
 There are two binaaries, `hash_documents` and `dedup_hashes`, one for each step:
 
-* `hash_documents` takes a file glob and produces (hash, filepath) key-value pairs and writes them to intermediate output files sharded by a hash prefix and run identifier
-* `dedup_hashes` accepts globs of the hash files and outputs a file with the unique hashes and a single filepath for that hash (removing colliding hashes, thereby removing duplicate files)
+1. `hash_documents` takes a file glob and produces (hash, filepath) key-value pairs and writes them to intermediate output files sharded by a hash prefix and run identifier
+1. `dedup_hashes` accepts globs of the hash files and outputs a file with the unique hashes and a single filepath for that hash (removing colliding hashes, thereby removing duplicate files)
 
 Note we know that the hash matches must be in the the same intermediate output files because their prefixes must match in order for there to be a full hash collision.
 
@@ -107,8 +107,8 @@ To run the pipeline locally use the `run_pipeline.sh` script. Example:
 
 This is a demonstration project. There would be more to do to make it production ready:
 
-1. Enumerate files from cloud object storage instead of from the local filesystem
-1. Load files from cloud object storage instead of from disk
-1. Robust testing
-1. Deployment configuration
-1. Sharding configuration
+* Enumerate files from cloud object storage instead of from the local filesystem
+* Load files from cloud object storage instead of from disk
+* Robust testing
+* Deployment configuration
+* Sharding configuration
