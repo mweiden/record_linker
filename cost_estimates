@@ -23,7 +23,7 @@ def runtime_and_cost(instance: InstanceType, scaling: ScalingConfig) -> (float, 
     runtime_hours = hashing_runtime + dedup_runtime
     cost = hashing_runtime * instance.price_per_hour * scaling.hash_instances \
         + dedup_runtime * instance.price_per_hour * scaling.dedup_instances
-    return (runtime_hours, cost) 
+    return (runtime_hours, cost, hashing_runtime, dedup_runtime) 
 
 instance_types = [
     InstanceType(
@@ -81,19 +81,19 @@ scaling_configs = [
 
 if __name__ == "__main__":
     print(
-        "| hash_instances | dedup_instances | network (Gbps) | runtime (hours) | instance | cost |"
+        "| hash_instances | dedup_instances | network (Gbps) | runtime (stg1/stg2, hours) | instance | cost |"
     )
     print(
         "|----------------|-----------------|----------------|-----------------|----------|------|"
     )
     for instance_type in instance_types:
         for scaling_config in scaling_configs:
-            runtime, cost = runtime_and_cost(instance_type, scaling_config)
+            runtime, cost, hash_runtime, dedup_runtime = runtime_and_cost(instance_type, scaling_config)
             print(
                 f"| {scaling_config.hash_instances} |"
                 f" {scaling_config.dedup_instances} |"
                 f" {instance_type.network_bandwidth_gbps} |"
-                f" {round(runtime, 2)} |"
+                f" {round(hash_runtime,2)}/{round(dedup_runtime,2)} |"
                 f" `{instance_type.name}` |"
-                f" {round(cost, 2)} |"
+                f" ${round(cost, 2)} |"
             )
