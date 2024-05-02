@@ -39,10 +39,10 @@ instance_types = [
         name="m6g.12xlarge"
     ),
     InstanceType(
-        dedup_cores=32,
-        network_bandwidth_gbps=25,
-        price_per_hour=1.90,
-        name="m5n.8xlarge"
+        dedup_cores=48,
+        network_bandwidth_gbps=50,
+        price_per_hour=1.98,
+        name="m5zn.6xlarge"
     ),
     InstanceType(
         dedup_cores=48,
@@ -71,6 +71,10 @@ scaling_configs = [
     ),
     ScalingConfig(
         hash_instances=32,
+        dedup_instances=4,
+    ),
+    ScalingConfig(
+        hash_instances=48,
         dedup_instances=4,
     ),
 ]
