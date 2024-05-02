@@ -25,6 +25,8 @@ There are two binaaries, `hash_documents` and `dedup_hashes`, one for each step:
 
 Note we know that the hash matches must be in the the same intermediate output files because their prefixes must match in order for there to be a full hash collision.
 
+For maximum throughput, `hash_documents` uses the [blake3](https://github.com/BLAKE3-team/BLAKE3) hash function, which has shown to have higher throughput than other collision-resistant hash functions (e.g. `SHA*`, `MD5`, etc).
+
 ## Benefits
 
 ### Parallelism
