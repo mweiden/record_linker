@@ -40,10 +40,11 @@ In experiments on an Apple M3 laptop, loading data from its SSD:
 - `hash_documents` can process ~1 GiB of files / sec
 - `dedup_hashes` can process hash files at ~275k rows / sec
 
-The experiments showed that `hash_documents` is IO bound rather than CPU bound, so we might be able to go higher provided higher-throughput IO.
+At 1 GiB/s, the bottleneck is IO from the SSD in `hash_documents`. The path to scaling this will be to increase IO either by reducing document size or increasing bandwidth.
 
 #### Hypothetical scenario for 1PB of documents
 
+Back of the envelope inputs/assumptions:
 - Estimated number of files: `2.2e9`
 - Formula for time of the hash generation step: `1024**5 / float(num_hash_instances * network_bandwidth_gbs * 1024**3 / 8)`
 - Formula for time of the hash deduplication step: `2.2e9 / float(num_dedup_instances * cores * 275000)`
@@ -78,6 +79,9 @@ Results from scaling the number of intstances and network bandwidth (instance ty
 | 32 | 4 | 100 | 0.73/0.01 | `m5zn.12xlarge` | $92.46 |
 
 See the `cost_estimates` script for more details.
+
+Caveats:
+- Note this assumes we can con continue to process data as quickly as it is downloaded; one option to mitigate this issue would be to run more than one `hash_documents` process per instance.
 
 ## Development
 
