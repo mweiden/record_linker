@@ -1,4 +1,6 @@
 use clap::Parser;
+use env_logger;
+use log;
 use std::collections::HashMap;
 use std::io;
 use std::time::Instant;
@@ -9,30 +11,37 @@ use record_linker::file_size::Size;
 use record_linker::rand::random_string;
 use record_linker::shard_store::ShardStore;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
-struct Cli {
+struct Params {
     input_glob: String,
     output_dir: String,
 }
 
+#[derive(Debug)]
+struct ProfilingReport {
+    num_files_processed: u32,
+    elapsed_time_secs: f64,
+    total_processed_gb: f64,
+    rate_mb_per_sec: f64,
+}
+
 fn main() -> io::Result<()> {
-    let cli = Cli::parse();
+    env_logger::init();
+    let params = Params::parse();
 
     // input and output
-    let file_iterator = FileIterator::new(&cli.input_glob)?;
+    let file_iterator = FileIterator::new(&params.input_glob)?;
     let file_suffix = random_string(6);
-    let mut shard_store = ShardStore::new(&cli.output_dir, file_suffix.clone());
+    let mut shard_store = ShardStore::new(&params.output_dir, file_suffix.clone());
 
     // result data structures
     let mut results = Vec::new();
     let mut shard_counts: HashMap<char, u32> = HashMap::new();
 
     // initial report
-    println!("hash_documents:");
-    println!("- input glob: {}", cli.input_glob);
-    println!("- ouput directory: {}", cli.output_dir);
-    println!("- file suffix: {}", file_suffix);
+    log::info!("{:?}", params);
+    log::info!("file suffix: {}", file_suffix);
 
     // main logic
     let start = Instant::now();
@@ -55,7 +64,7 @@ fn main() -> io::Result<()> {
                 total_bytes += path.size()?;
                 total_files += 1;
             }
-            Err(err) => eprintln!("Error reading file: {}", err),
+            Err(err) => log::error!("Error reading file: {}", err),
         }
     }
 
@@ -67,21 +76,16 @@ fn main() -> io::Result<()> {
     let duration = start.elapsed();
 
     // final reporting
-    println!("\nshard\tcount");
-    for (shard, count) in shard_counts {
-        println!("{}\t{}", shard, count)
-    }
+    log::info!("shard counts: {:?}", shard_counts);
 
-    println!("\nProfiling:");
-    println!("- Number of files processed:\t{}", total_files);
-    println!("- Elapsed time:\t\t\t{:.2}s", duration.as_secs_f64());
-    println!(
-        "- Size of files processed:\t{:.2} GB",
-        total_bytes as f64 / 1e9
-    );
-    println!(
-        "- Processing rate:\t\t{:.2} MB/sec",
-        total_bytes as f64 / duration.as_secs_f64() / 1e6
+    log::info!(
+        "{:?}",
+        ProfilingReport {
+            num_files_processed: total_files,
+            elapsed_time_secs: duration.as_secs_f64(),
+            total_processed_gb: total_bytes as f64 / 1e9,
+            rate_mb_per_sec: total_bytes as f64 / duration.as_secs_f64() / 1e6,
+        }
     );
 
     Ok(())

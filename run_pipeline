@@ -12,18 +12,36 @@ trap cleanup EXIT SIGINT SIGTERM
 
 # Help documentation
 usage() {
-    echo "Usage: $0 <input_glob> <output_directory>"
-    echo "This script checks if the given parameters are directories."
-    echo "  <input_globs>\tcomma separated list of globs to deduplicate"
-    echo "  <output_dir>\tdirectory to save the deuplicated files to"
-    echo "Example: $0 input_dir/\*.txt output_dir/"
+    echo -e "Usage: $0 [--debug] <input_glob> <output_directory>"
+    echo -e "This script runs the record linkage pipeline on your local host.\n"
+    echo -e "Params:"
+    echo -e "  - <input_globs>\tcomma separated list of globs to deduplicate; first pipeline stage is parallelized across globs"
+    echo -e "  - <output_dir>\tdirectory to save the deuplicated files to\n"
+    echo -e "Example: $0 'input_dir/[a-m]*.txt,input_dir/[n-z]*.txt' output_dir/\n"
     exit 1
 }
 
-# Check for help option
-if [[ "$1" == "--help" ]]; then
-    usage
-fi
+# Initialize debug mode variable
+RUST_LOG="error"
+
+# Parse command line arguments
+while [[ "$#" > 0 ]]; do
+    case "$1" in
+        --debug)
+            RUST_LOG="info"
+            shift 1
+            ;;
+        --help)
+            usage
+            exit 0
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+export RUST_LOG
 
 # Check for correct number of arguments
 if [ "$#" -ne 2 ]; then
@@ -57,19 +75,20 @@ log() {
     echo -e "\033[32m${1}\033[0m"
 }
 
-validate_directory "$2"
-
 IFS=',' read -ra INPUT_GLOBS <<< "$1"
 for i in "${INPUT_GLOBS[@]}"; do
     validate_glob "$i"
 done
-OUTPUT_DIR="$2"
 
+OUTPUT_DIR="$2"
+validate_directory "$OUTPUT_DIR"
+
+# Start the pipeline
 log "Hashing documents..."
 for GLOB in "${INPUT_GLOBS[@]}"; do
     GLOB="${GLOB/#\~/$HOME}"
     GLOB="${GLOB/#\./$PWD}"
-    ./target/release/hash_documents "$GLOB" "$TMP_DIR" > /dev/null &
+    ./target/release/hash_documents "$GLOB" "$TMP_DIR" &
 done
 
 wait
@@ -82,7 +101,7 @@ SHARDS=($(ls "$TMP_DIR/" | sed 's/^\(.\).*/\1/' | sort -u))
 log "\nDeduping files based on their hashes..."
 
 for SHARD in "${SHARDS[@]}"; do
-    ./target/release/dedup_hashes "$TMP_DIR/${SHARD}_*" "$OUTPUT_DIR/$SHARD.csv" > /dev/null &
+    ./target/release/dedup_hashes "$TMP_DIR/${SHARD}_*" "$OUTPUT_DIR/$SHARD.csv" &
 done
 
 wait

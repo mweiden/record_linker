@@ -3,10 +3,11 @@
 Demonstration software for the following problem:
 
 > Deduplicate a large corpus of documents:
-> - ~500KB each
+> - ~1PiB of documents, ~500KB each
 > - documents are in cloud storage, e.g. s3, gcs
 > - there are too many to fit on a single machine
 > - do not use existing data processing frameworks, e.g. mapreduce, spark
+> - it should run in less than a day
 
 ## Approach
 
@@ -34,9 +35,43 @@ The `dedup_hashes` stage can be parallelized by running multiple instances of th
 
 ### Scalability
 
-In experiments on an Apple M3 laptop, loading data from its SSD, `hash_documents` can process 1 GB of files per second. The experiments showed that the binaries were IO bound rather than CPU bound.
+In experiments on an Apple M3 laptop, loading data from its SSD:
 
-In a production setting, ihis means our system would be IO bound since IO latency to an external object store is way slower than IO to an SSD. We would want to deploy instances of the binaries to machines until their network bandwidth was saturated, then deploy to additional machines. The number of machines would depend on the size of the input corpus and our job latency requirements.
+- `hash_documents` can process ~1 GiB of files / sec
+- `dedup_hashes` can process hash files at ~75k rows / sec
+
+The experiments showed that the binaries were IO bound rather than CPU bound, so we might be able to go higher provided higher-throughput IO.
+
+#### Hypothetical scenario for 1PB of documents
+
+Scaling invariants:
+- Estimated number of files: `2.2e9`
+- Formula for time of the hash generation step: `1024^5 / (num_instances * network_bandwidth_gbs * 1024^3 / 8)`
+- Formula for time of the hash deduplication step: `2.2e9 / (num_instances * cores * 75000)`
+- Fix [10 Gbps network bandwidth](https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html#gp_network); that's 1.34 GiB/s
+- Cheapest AWS instance with sustained 10 Gbps network bandwidth is `m5.8xlarge` at $1.54 / hour
+
+| instances | runtime (hours) |
+-------------------------------
+| 1         | 225.5           |
+| 10        | 22.6            |
+| 20        | 11.3            |
+| 40        | 5.6             |
+
+Hypothetically the scaling is linear, so the cost will be ~$345.
+
+Additionally, we can could scale network bandwidth:
+
+| instances | network (Gbps) | runtime (hours) | instance | cost |
+------------------------------------------------------------------
+| 1         | 20             | 116.8           | `m5.16xlarge` | $358 |
+| 1         | 25             | 94.8            | `m5n.8xlarge` | $180 |
+| 1         | 50             | 51.6            | `m5n.12xlarge` | $147 | 
+| 1         | 100            | 29.9            | `m5dn.24xlarge` | $196 | 
+| 2         | 50             | 25.8            | `m5n.12xlarge` | $147 | 
+| 4         | 50             | 12.9            | `m5n.12xlarge` | $147 | 
+| 10        | 50             | 5.2             | `m5n.12xlarge` | $147 | 
+| 20        | 50             | 2.6             | `m5n.12xlarge` | $147 | 
 
 ## Development
 
@@ -46,10 +81,16 @@ To build the project run the following command.
 cargo build --release
 ```
 
+To generate a test corpus
+
+```
+./generate_corpus <corpus_dir>
+```
+
 To run the pipeline locally use the `run_pipeline.sh` script. Example:
 
 ```
-./run_pipeline.sh './corpus/[a-m]*.csv,./corpus/[n-z]*.csv' ./unique
+./run_pipeline '~/Desktop/corpus/[abcd]*.txt,~/Desktop/corpus/[ef01]*.txt,~/Desktop/corpus/[2345]*.txt,~/Desktop/corpus/[6789]*.txt' ~/Desktop/unique
 ```
 
 ## TODOs for Production

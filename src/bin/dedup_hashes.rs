@@ -1,4 +1,6 @@
 use clap::Parser;
+use env_logger;
+use log;
 use record_linker::file_iterator::FileIterator;
 use std::collections::HashMap;
 use std::fs::File;
@@ -6,25 +8,37 @@ use std::io::{self, BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::time::Instant;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
-struct Cli {
+struct Params {
     input_glob: String,
     output_file: PathBuf,
 }
 
+#[derive(Debug)]
+struct ProfilingReport {
+    unique_files: u32,
+    total_files: u32,
+    elapsed_time_secs: f64,
+    rate_rps: f64,
+}
+
 fn main() -> io::Result<()> {
-    let cli = Cli::parse();
+    env_logger::init();
+    let params = Params::parse();
+
+    log::info!("params {:?}", params);
 
     // input and output
-    let input_files = FileIterator::new(&cli.input_glob)?;
-    let mut output_file = File::create(&cli.output_file)?;
+    let input_files = FileIterator::new(&params.input_glob)?;
+    let mut output_file = File::create(&params.output_file)?;
 
     // result data structures
     let mut results: HashMap<String, Vec<String>> = HashMap::new();
     let mut unique_files: u32 = 0;
     let mut total_files: u32 = 0;
 
+    // main logic
     let start = Instant::now();
 
     for entry_result in input_files {
@@ -51,10 +65,17 @@ fn main() -> io::Result<()> {
     }
 
     let duration = start.elapsed();
-    println!("dedup_hashes:");
-    println!("- glob processed:\t{}", cli.input_glob);
-    println!("- unique / total files:\t{}/{}", unique_files, total_files);
-    println!("- Elapsed time:\t\t{:.2}s", duration.as_secs_f64());
+
+    // reporting
+    log::info!(
+        "profiling report: {:?}",
+        ProfilingReport {
+            unique_files: unique_files,
+            total_files: total_files,
+            elapsed_time_secs: duration.as_secs_f64(),
+            rate_rps: total_files as f64 / duration.as_secs_f64(),
+        }
+    );
 
     Ok(())
 }

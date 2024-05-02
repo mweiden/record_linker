@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+import os
+import random
+import sys
+import uuid
+
+def create_files(target_dir, corpus_size=2*1024**3, probability_dups=0.05):
+    # Load dictionary words into memory
+    try:
+        with open('/usr/share/dict/words', 'r') as file:
+            words = file.read().splitlines()
+    except FileNotFoundError:
+        print("Dictionary file not found.")
+        return
+
+    # Ensure the directory exists
+    if not os.path.isdir(target_dir):
+        os.makedirs(target_dir)
+
+    total_size = 0
+    file_count = 0
+    str_buf = ""
+
+    while total_size < corpus_size:
+        file_size = 0
+        file_path = os.path.join(target_dir, f"{str(uuid.uuid4()).replace("-","")}.txt")
+
+        target_file_size = max(random.gauss(500*1024, 5*1024), 1024)
+
+        # Open file to write
+        is_duplicate = True
+        if len(str_buf) == 0 or random.uniform(0, 1) > probability_dups:
+            is_duplicate = False
+            str_buf = ""
+            while file_size < target_file_size:
+                word = random.choice(words)
+                str_buf += word + " "
+                file_size += len(word) + 1  # Plus one for the space
+
+        with open(file_path, 'w') as file:
+            file.write(str_buf)
+
+        print(
+            f"Created {file_path}, size {round(file_size / 1024)} KB, duplicate?={is_duplicate}, "
+            f"total={round(total_size / float(1024**3), 2)} GB"
+        )
+        total_size += file_size
+        file_count += 1
+
+    print(f"Generated {file_count} files totaling {round(total_size / float(1024**3), 2)} GB in {target_dir}")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python script.py /path/to/directory")
+        sys.exit(1)
+
+    create_files(sys.argv[1])
