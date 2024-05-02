@@ -33,7 +33,7 @@ For maximum throughput, `hash_documents` uses the [blake3](https://github.com/BL
 
 Data input into each stage of the pipeline can be sharded and parallelized horizontally.
 
-You can scale the hashing step by breaking down the input corpus into separate globs (e.g. `some_dir/[a-m]*.txt,some_dir/[n-z]*.txt`) and running a separate instance of `hash_documents` on each glob. The output of `hash_documents` is sharded by the first char of the hash value: intermediate hash output files follow the format `<intermediate_output_dir>/<first_char_of_hash>_<unique_run_id>.csv`. This means there are a maximum of 36 output shards (corresponding to the chars `[a-z0-9]`). This could be easily expanded by sharding by more chars from the hash prefix.
+You can scale the hashing step by breaking down the input corpus into separate globs (e.g. `some_dir/[a-m]*.txt,some_dir/[n-z]*.txt`) and running a separate instance of `hash_documents` on each glob. The output of `hash_documents` is sharded by the first char of the hash value: intermediate hash output files follow the format `<intermediate_output_dir>/<first_char_of_hash>_<unique_run_id>.csv`. This means there are a maximum of 16 output shards (corresponding to the chars `[a-f0-9]`). This could be easily expanded by sharding by more chars from the hash prefix (e.g. 2 chars would result in 256 possible shards).
 
 The `dedup_hashes` stage can be parallelized by running multiple instances of the binary on sub-globs of the intermediate hash output files. The clearest way to do this would be to spin up one instance of `dedup_hashes` for each hash prefix shard (e.g. `intermediate_output_dir/a_*.csv`).
 
