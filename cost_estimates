@@ -62,16 +62,8 @@ scaling_configs = [
         dedup_instances=1,
     ),
     ScalingConfig(
-        hash_instances=4,
-        dedup_instances=4,
-    ),
-    ScalingConfig(
         hash_instances=16,
         dedup_instances=1,
-    ),
-    ScalingConfig(
-        hash_instances=16,
-        dedup_instances=4,
     ),
     ScalingConfig(
         hash_instances=32,
