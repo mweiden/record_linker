@@ -18,7 +18,7 @@ The solution breaks the problem down into two steps
 1. Generate a collision-resistant hash of the contents of each file
 1. Gather filepaths by matching hashes, and then pick just one filepath from each collection
 
-There are two binaaries, `hash_documents` and `dedup_hashes`, one for each step:
+There are two binaries, `hash_documents` and `dedup_hashes`, one for each step:
 
 1. `hash_documents` takes a file glob and produces (hash, filepath) key-value pairs and writes them to intermediate output files sharded by a hash prefix and run identifier
 1. `dedup_hashes` accepts globs of the hash files and outputs a file with the unique hashes and a single filepath for that hash (removing colliding hashes, thereby removing duplicate files)
@@ -85,7 +85,7 @@ Results from scaling the number of intstances and network bandwidth (instance ty
 See the `cost_estimates` script for more details.
 
 Caveats:
-- Note this assumes we can con continue to process data as quickly as it is downloaded; one option to mitigate this issue would be to run more than one `hash_documents` process per instance.
+- Note this assumes we can continue to process data as quickly as it is downloaded; one option to mitigate this issue would be to run more than one `hash_documents` process per instance.
 
 ## Development
 
