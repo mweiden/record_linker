@@ -44,9 +44,9 @@ In experiments on an Apple M3 laptop, loading data from its SSD:
 - `hash_documents` can process ~1 GiB of files / sec
 - `dedup_hashes` can process hash files at ~275k rows / sec
 
-At 1 GiB/s, the bottleneck is IO from the SSD in `hash_documents`. The path to scaling this will be to increase IO either by reducing document size or increasing bandwidth.
+At 1 GiB/s, the bottleneck is IO from the SSD in `hash_documents`. The path to scaling this will be to increase IO either by reducing document size (compression) or increasing bandwidth.
 
-#### Hypothetical scenario for 1PB of documents
+#### Hypothetical scenario for 1PiB of documents
 
 Back of the envelope inputs/assumptions:
 - Estimated number of files: `2.2e9`
