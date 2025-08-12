@@ -1,5 +1,7 @@
 # Record Linker
 
+[![CI](https://github.com/mweiden/record_linker/actions/workflows/ci.yml/badge.svg)](https://github.com/mweiden/record_linker/actions/workflows/ci.yml)
+
 Demonstration software for the following problem:
 
 > Deduplicate a large corpus of documents:

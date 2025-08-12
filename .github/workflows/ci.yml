@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Run unit tests
+        run: cargo test
+      - name: Build binaries
+        run: cargo build --release
+      - name: End-to-end run_pipeline test
+        run: |
+          mkdir -p e2e_input e2e_output
+          echo 'foo' > e2e_input/a.txt
+          echo 'bar' > e2e_input/b.txt
+          echo 'foo' > e2e_input/c.txt
+          ./run_pipeline 'e2e_input/*.txt' e2e_output
+          test "$(cat e2e_output/*.csv | wc -l)" -eq 2
