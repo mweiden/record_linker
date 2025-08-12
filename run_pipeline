@@ -52,15 +52,12 @@ fi
 # Validate inputs
 validate_glob() {
     local pattern="$1"
-    local files=( $pattern )
-
-    # Check if the expansion returns anything
-    if [ ${#files[@]} -eq 0 ]; then
+    if compgen -G "$pattern" > /dev/null; then
+        return 0
+    else
         echo "No files match the glob '$pattern'."
         echo "Please provide a valid glob pattern."
-        return 1 # Return 1 for error state
-    else
-        return 0 # Return 0 for success state
+        return 1
     fi
 }
 
@@ -96,18 +93,19 @@ wait
 log "\nIntermediate hash files (first char of filename is the shard):"
 ls "$TMP_DIR/"
 
-SHARDS=($(ls "$TMP_DIR/" | sed 's/^\(.\).*/\1/' | sort -u))
+SHARDS=($(ls "$TMP_DIR" | sed 's/^\(.\).*/\1/' | sort -u))
 
 log "\nDeduping files based on their hashes..."
 
 for SHARD in "${SHARDS[@]}"; do
-    ./target/release/dedup_hashes "$TMP_DIR/${SHARD}_*" "$OUTPUT_DIR/$SHARD.csv" &
+    ./target/release/dedup_hashes "$TMP_DIR"/${SHARD}_* "$OUTPUT_DIR/$SHARD.csv" &
 done
 
 wait
 
 log "\nUniques (first char of the filename is the shard):"
-ls $OUTPUT_DIR/*.csv
+ls "$OUTPUT_DIR"/*.csv
 
 echo ""
-log "Run the following command to get uniques: ls $OUTPUT_DIR/*.csv | xargs cat"
+log "Run the following command to get uniques: ls '$OUTPUT_DIR'/*.csv | xargs cat"
+

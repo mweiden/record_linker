@@ -36,7 +36,6 @@ fn main() -> io::Result<()> {
     let mut shard_store = ShardStore::new(&params.output_dir, file_suffix.clone());
 
     // result data structures
-    let mut results = Vec::new();
     let mut shard_counts: HashMap<char, u32> = HashMap::new();
 
     // initial report
@@ -53,10 +52,14 @@ fn main() -> io::Result<()> {
         match file {
             Ok(path) => {
                 let hash = path.blake3()?;
-                let shard = hash.chars().next().unwrap();
-                let path_str = path.to_str().unwrap().to_owned();
+                let shard = hash
+                    .chars()
+                    .next()
+                    .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "empty hash"))?;
+                let path_str = path.to_string_lossy().into_owned();
 
-                results.push((shard, hash, path_str));
+                let line = format!("{},{}\n", hash, path_str);
+                shard_store.write(shard, line.as_bytes())?;
 
                 let count = shard_counts.entry(shard).or_insert(0);
                 *count += 1;
@@ -68,10 +71,7 @@ fn main() -> io::Result<()> {
         }
     }
 
-    for (shard, hash, file_path) in results {
-        let line = format!("{},{}\n", hash, file_path);
-        shard_store.write(shard, line.as_bytes())?;
-    }
+    shard_store.finalize()?;
 
     let duration = start.elapsed();
 

@@ -2,7 +2,7 @@ use clap::Parser;
 use env_logger;
 use log;
 use record_linker::file_iterator::FileIterator;
-use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 use std::path::PathBuf;
@@ -34,7 +34,7 @@ fn main() -> io::Result<()> {
     let mut output_file = File::create(&params.output_file)?;
 
     // result data structures
-    let mut results: HashMap<String, Vec<String>> = HashMap::new();
+    let mut seen: HashSet<String> = HashSet::new();
     let mut unique_files: u32 = 0;
     let mut total_files: u32 = 0;
 
@@ -48,20 +48,17 @@ fn main() -> io::Result<()> {
 
         for line_result in reader.lines() {
             let line = line_result?;
-            let entry: Vec<&str> = line.split(",").collect();
-            assert!(entry.len() == 2);
-            let hash = entry[0].to_owned();
-            let file_path = entry[1].to_owned();
-            let hash_vec = results.entry(hash).or_insert(Vec::new());
-            hash_vec.push(file_path);
-            total_files += 1;
+            let mut parts = line.splitn(2, ',');
+            if let (Some(hash), Some(file_path)) = (parts.next(), parts.next()) {
+                total_files += 1;
+                if seen.insert(hash.to_owned()) {
+                    writeln!(output_file, "{},{}", hash, file_path)?;
+                    unique_files += 1;
+                }
+            } else {
+                log::warn!("Malformed line: {}", line);
+            }
         }
-    }
-
-    for (hash, hash_vec) in results {
-        let line = format!("{},{}\n", hash, hash_vec.iter().next().unwrap());
-        output_file.write(line.as_bytes())?;
-        unique_files += 1;
     }
 
     let duration = start.elapsed();
