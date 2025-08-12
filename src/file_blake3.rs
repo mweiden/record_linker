@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{self, BufReader, Read};
+use std::io::{self, Read};
 use std::path::PathBuf;
 
 pub trait Blake3Hash {
@@ -9,27 +9,24 @@ pub trait Blake3Hash {
 impl Blake3Hash for PathBuf {
     fn blake3(&self) -> io::Result<String> {
         // Open the file
-        let file = File::open(self)?;
+        let mut file = File::open(self)?;
 
-        // Create a buffered reader for efficient reading
-        let mut reader = BufReader::new(file);
-
-        // Initialize the SHA-256 hasher
+        // Initialize the hasher
         let mut hasher = blake3::Hasher::new();
 
-        // Buffer for reading chunks
-        let mut buffer = [0; 1024];
+        // Buffer for reading chunks (64 KiB)
+        let mut buffer = [0u8; 64 * 1024];
 
         // Read the file and update the hash in chunks
-        while let Ok(bytes_read) = reader.read(&mut buffer) {
+        loop {
+            let bytes_read = file.read(&mut buffer)?;
             if bytes_read == 0 {
                 break; // End of file
             }
-            hasher.update(&buffer[..bytes_read]); // Update the hash with the read bytes
+            hasher.update(&buffer[..bytes_read]);
         }
 
         // Get the final digest and convert it to a hexadecimal string
-        let digest = hasher.finalize();
-        Ok(digest.to_string())
+        Ok(hasher.finalize().to_string())
     }
 }

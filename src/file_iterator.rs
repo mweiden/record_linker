@@ -11,7 +11,7 @@ pub struct FileIterator {
 impl FileIterator {
     // Constructor to create a new FileIterator for a given glob
     pub fn new(pattern: &String) -> io::Result<Self> {
-        let paths = glob(pattern.as_str()).unwrap();
+        let paths = glob(pattern.as_str()).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
         let entries = paths.map(|result| match result {
             Ok(path) => Ok(path),
             Err(err) => Err(io::Error::new(io::ErrorKind::Other, err)),
